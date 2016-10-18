@@ -10,7 +10,7 @@ type Point = (Int,Int)
 
 data Cmd = Trace Point | Expire Int
 
-data Model = Model { g :: Int
+data Model = Model { nextIndex :: Int
                    , points ::  Map Int Point
                    }
 
