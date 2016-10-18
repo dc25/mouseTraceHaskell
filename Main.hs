@@ -31,23 +31,22 @@ ballToAttrs (Ball (x,y) ) =
     fromList [ ( "cx",     pack $ show x)
              , ( "cy",     pack $ show y)
              , ( "r",      "10.0")
-             , ( "style",  "fill:purple")
+             , ( "style",  "fill:green")
              ] 
 
 showBall :: MonadWidget t m => Int -> Dynamic t Ball -> m (Event t Cmd)
 showBall index dBall  = do
     elDynAttrNS' svgns "circle" (fmap ballToAttrs dBall) $ return ()
-    db <- delay 0.5 =<< getPostBuild
+    db <- delay 0.3 =<< getPostBuild
     return $ fmap (const $ Expire index) db
 
 view :: MonadWidget t m => Dynamic t Model -> m (Event t Cmd)
 view model = do
     let attrs = constDyn $ 
-                    fromList 
-                        [ ("width" , "600")
-                        , ("height", "400")
-                        , ("style" , "border:solid; margin:8em")
-                        ]
+                    fromList [ ("width" , "600")
+                             , ("height", "400")
+                             , ("style" , "border:solid; margin:8em")
+                             ]
 
         ballMap = fmap balls model
 
