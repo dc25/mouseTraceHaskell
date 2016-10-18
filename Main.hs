@@ -2,14 +2,11 @@
 {-# LANGUAGE RecursiveDo #-}
 import Reflex
 import Reflex.Dom 
-import Data.Map as DM (Map, fromList, elems, insert, delete, empty)
-import Data.Text as DT (Text, pack)
+import Data.Map (Map, fromList, elems, insert, delete, empty)
+import Data.Text (Text, pack)
 import GHCJS.DOM.EventM (mouseOffsetXY) 
 
 type Point = (Int,Int)
-
-height = 400
-width = 600
 
 data Cmd = Trace (Int, Int) | Expire Int
 
@@ -31,26 +28,24 @@ update (Expire index) model@(Model _ cs) =
 
 ballToAttrs :: Ball -> Map Text Text
 ballToAttrs (Ball (x,y) ) =
-    DM.fromList [ ( "cx",     pack $ show x)
-                , ( "cy",     pack $ show y)
-                , ( "r",      "10.0")
-                , ( "style",  "fill:grey")
-                ] 
+    fromList [ ( "cx",     pack $ show x)
+             , ( "cy",     pack $ show y)
+             , ( "r",      "10.0")
+             , ( "style",  "fill:purple")
+             ] 
 
 showBall :: MonadWidget t m => Int -> Dynamic t Ball -> m (Event t Cmd)
 showBall index dBall  = do
-    elStopPropagationNS svgns "g" Mousedown $ 
-        elDynAttrNS' svgns "circle" (fmap ballToAttrs dBall) $ return ()
-
-    db <- delay 1 =<< getPostBuild
+    elDynAttrNS' svgns "circle" (fmap ballToAttrs dBall) $ return ()
+    db <- delay 0.5 =<< getPostBuild
     return $ fmap (const $ Expire index) db
 
 view :: MonadWidget t m => Dynamic t Model -> m (Event t Cmd)
 view model = do
     let attrs = constDyn $ 
-                    DM.fromList 
-                        [ ("width" , pack $ show width)
-                        , ("height", pack $ show height)
+                    fromList 
+                        [ ("width" , "600")
+                        , ("height", "400")
                         , ("style" , "border:solid; margin:8em")
                         ]
 
