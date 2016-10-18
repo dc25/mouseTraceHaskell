@@ -8,37 +8,35 @@ import GHCJS.DOM.EventM (mouseOffsetXY)
 
 type Point = (Int,Int)
 
-data Cmd = Trace (Int, Int) | Expire Int
+data Cmd = Trace Point | Expire Int
 
-data Ball  = Ball { position :: Point } 
-
-data Model = Model { nextIndex :: Int
-                   , balls ::  Map Int Ball
+data Model = Model { g :: Int
+                   , points ::  Map Int Point
                    }
 
 svgns :: Maybe Text
 svgns = (Just "http://www.w3.org/2000/svg")
 
 update :: Cmd -> Model -> Model
-update (Trace location) (Model ni cs)  = 
-    Model (ni+1) (insert ni (Ball location) cs)
+update cmd (Model ni points)  = 
+    case cmd of
+        Trace location -> Model (ni+1) $ insert ni location points
+        Expire index ->   Model ni $ delete index points
 
-update (Expire index) model@(Model _ cs) = 
-    model {balls = delete index cs}
-
-ballToAttrs :: Ball -> Map Text Text
-ballToAttrs (Ball (x,y) ) =
+pointAttrs :: Point -> Map Text Text
+pointAttrs (x,y) =
     fromList [ ( "cx",     pack $ show x)
              , ( "cy",     pack $ show y)
              , ( "r",      "10.0")
              , ( "style",  "fill:green")
              ] 
 
-showBall :: MonadWidget t m => Int -> Dynamic t Ball -> m (Event t Cmd)
-showBall index dBall  = do
-    elDynAttrNS' svgns "circle" (fmap ballToAttrs dBall) $ return ()
+showPoint :: MonadWidget t m => Int -> Dynamic t Point -> m (Event t Cmd)
+showPoint index dPoint = do
+    elStopPropagationNS svgns "g" Mousemove $ 
+        elDynAttrNS' svgns "circle" (pointAttrs <$> dPoint) $ return ()
     db <- delay 0.3 =<< getPostBuild
-    return $ fmap (const $ Expire index) db
+    return $ (const $ Expire index) <$> db
 
 view :: MonadWidget t m => Dynamic t Model -> m (Event t Cmd)
 view model = do
@@ -48,17 +46,14 @@ view model = do
                              , ("style" , "border:solid; margin:8em")
                              ]
 
-        ballMap = fmap balls model
+        pointMap = points <$> model
 
-    (elm, dExpireEventMap) <- elDynAttrNS' svgns "svg" attrs $ listWithKey ballMap showBall
+    (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey pointMap showPoint
 
-    traceEvent <- wrapDomEvent 
-                      (_element_raw elm) 
-                      (onEventName Mousemove) 
-                      mouseOffsetXY
+    traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
 
-    return $ leftmost [ fmap Trace traceEvent 
-                      , switch $ (leftmost . elems) <$> current dExpireEventMap
+    return $ leftmost [ Trace <$> traceEvent 
+                      , switch $ leftmost.elems <$> current dExpireEvents
                       ]
 
 main = mainWidget $ do
