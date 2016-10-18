@@ -21,7 +21,7 @@ update :: Cmd -> Model -> Model
 update cmd (Model ni points)  = 
     case cmd of
         Trace location -> Model (ni+1) $ insert ni location points
-        Expire index ->   Model ni $ delete index points
+        Expire index ->   Model ni     $ delete index points
 
 pointAttrs :: Point -> Map Text Text
 pointAttrs (x,y) =
