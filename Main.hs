@@ -15,12 +15,9 @@ type Point = (Int,Int)
 height = 400
 width = 600
 
-data Color = Red | Green | Blue | Orange | Purple deriving (Show, Bounded, Enum)
+data Cmd = Trace (Int, Int) | Expire Int
 
-data Cmd = Pick (Int, Int) | Pop Int
-
-data Ball  = Ball { position :: Point
-                  } 
+data Ball  = Ball { position :: Point } 
 
 data Model = Model { nextIndex :: Int
                    , balls ::  Map Int Ball
@@ -30,11 +27,11 @@ svgns :: Maybe Text
 svgns = (Just "http://www.w3.org/2000/svg")
 
 update :: Cmd -> Model -> Model
-update (Pick location) (Model ni cs)  = 
+update (Trace location) (Model ni cs)  = 
     let ball = Ball location
     in Model (ni+1) (insert ni ball cs)
 
-update (Pop index) model@(Model _ cs) = 
+update (Expire index) model@(Model _ cs) = 
     model {balls = delete index cs}
 
 ballToAttrs :: Ball -> Map Text Text
@@ -47,13 +44,11 @@ ballToAttrs (Ball (x,y) ) =
 
 showBall :: MonadWidget t m => Int -> Dynamic t Ball -> m (Event t Cmd)
 showBall index dBall  = do
-    let dCircleAttrs = fmap ballToAttrs dBall
-
-    (el,_) <- elStopPropagationNS svgns "g" Mousedown $ 
-                 elDynAttrNS' svgns "circle" dCircleAttrs $ return ()
+    elStopPropagationNS svgns "g" Mousedown $ 
+        elDynAttrNS' svgns "circle" (fmap ballToAttrs dBall) $ return ()
 
     db <- delay 1 =<< getPostBuild
-    return $ fmap (const $ Pop index) db
+    return $ fmap (const $ Expire index) db
 
 view :: MonadWidget t m => Dynamic t Model -> m (Event t Cmd)
 view model = do
@@ -66,15 +61,15 @@ view model = do
 
         ballMap = fmap balls model
 
-    (elm, dPopEventMap) <- elDynAttrNS' svgns "svg" attrs $ listWithKey ballMap showBall
+    (elm, dExpireEventMap) <- elDynAttrNS' svgns "svg" attrs $ listWithKey ballMap showBall
 
-    pickEvent <- wrapDomEvent 
+    traceEvent <- wrapDomEvent 
                       (_element_raw elm) 
                       (onEventName Mousemove) 
                       mouseOffsetXY
 
-    return $ leftmost [ fmap Pick pickEvent 
-                      , switch $ (leftmost . elems) <$> current dPopEventMap
+    return $ leftmost [ fmap Trace traceEvent 
+                      , switch $ (leftmost . elems) <$> current dExpireEventMap
                       ]
 
 main = mainWidget $ do
