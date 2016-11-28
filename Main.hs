@@ -8,20 +8,20 @@ import GHCJS.DOM.EventM (mouseOffsetXY)
 
 type Point = (Int,Int)
 
-data Cmd = Trace Point | Expire Int
+data Cmd = Trace (Int, Point) | Expire Int
 
-data Model = Model { nextIndex :: Int
-                   , points ::  Map Int Point
+data Model = Model { 
+                   points ::  Map Int Point
                    }
 
 svgns :: Maybe Text
 svgns = (Just "http://www.w3.org/2000/svg")
 
 update :: Cmd -> Model -> Model
-update cmd (Model ni points)  = 
+update cmd (Model points)  = 
     case cmd of
-        Trace location -> Model (ni+1) $ insert ni location points
-        Expire index ->   Model ni     $ delete index points
+        Trace (index, location) -> Model $ insert index location points
+        Expire index ->   Model $ delete index points
 
 pointAttrs :: Point -> Map Text Text
 pointAttrs (x,y) =
@@ -52,11 +52,14 @@ view model = do
 
     traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
 
-    return $ leftmost [ Trace <$> traceEvent 
+    dTraceAdd <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) traceEvent
+    let evTraceAdd = updated dTraceAdd
+
+    return $ leftmost [ Trace <$> evTraceAdd
                       , switch $ leftmost.elems <$> current dExpireEvents
                       ]
 
 main = mainWidget $ do
     rec 
-        model <- foldDyn update (Model 0 empty) =<< view model
+        model <- foldDyn update (Model empty) =<< view model
     return ()
