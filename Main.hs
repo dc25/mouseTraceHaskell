@@ -36,26 +36,22 @@ showPoint index dPoint = do
     db <- delay 0.3 =<< getPostBuild
     return $ (const $ Expire index) <$> db
 
-view :: MonadWidget t m => Dynamic t Model -> m (Event t Cmd)
-view model = do
+main = mainWidget $ do
     let attrs = constDyn $ 
                     fromList [ ("width" , "600")
                              , ("height", "400")
                              , ("style" , "border:solid; margin:8em")
                              ]
 
-    (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey model showPoint
-
-    traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
-
-    dTraceAdd <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) traceEvent
-    let evTraceAdd = updated dTraceAdd
-
-    return $ leftmost [ Trace <$> evTraceAdd
-                      , switch $ leftmost.elems <$> current dExpireEvents
-                      ]
-
-main = mainWidget $ do
     rec 
-        model <- foldDyn update mempty =<< view model
+        (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey model showPoint
+
+        traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
+
+        dTraceAdd <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) traceEvent
+
+        let viewEvents = leftmost [ Trace <$> updated dTraceAdd
+                          , switch $ leftmost.elems <$> current dExpireEvents
+                          ]
+        model <- foldDyn update mempty viewEvents
     return ()
