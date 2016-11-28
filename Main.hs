@@ -23,7 +23,7 @@ pointAttrs (x,y) =
     fromList [ ( "cx",     pack $ show x)
              , ( "cy",     pack $ show y)
              , ( "r",      "10.0")
-             , ( "style",  "fill:green")
+             , ( "style",  "fill:orange")
              ] 
 
 showPoint :: MonadWidget t m => Int -> Point -> m (Event t Int)
@@ -35,8 +35,8 @@ showPoint index point = do
 
 main = mainWidget $ do
     rec 
-        let expireMapEv0 = listHoldWithKey mempty updateEvents showPoint
-        (elm, expireMapEv) <- elDynAttrNS' svgns "svg" (constDyn boxAttrs) expireMapEv0
+        (elm, expireMapEv) <- elDynAttrNS' svgns "svg" (constDyn boxAttrs) $ 
+                                  listHoldWithKey mempty updateEvents showPoint
 
         mouseEv <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
         mouseDyn <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) mouseEv

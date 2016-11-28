@@ -10,12 +10,12 @@ ghcjs-base-0.2.0.0-D8NHjFR0nuJEBIdpJ8312j:16499
 ghcjs-dom-0.2.3.1-L0IRwwiUDix9xezZ47SisT:138889
 ghcjs-prim-0.1.0.0-IFhsWclGfLr1HfhUvIVylA:10712
 integer-gmp:             79637
-main:                    32422
+main:                    31379
 prim-uniq-0.1.0.1-Lbg7Imujn019qkjLCx908j:2786
 primitive-0.6.1.0-PBvNfnj6B81wEvI5CBk0H:809
 ref-tf-0.4.0.1-3hM7hnw7bOB1FwMAOCGwpN:1286
 reflex-0.5.0-4dY2MAQRT2h4hcfauhDnW5:1068997
-reflex-dom-0.4-D2yHtMVcsX3FVd3U7yxR5m:585916
+reflex-dom-0.4-D2yHtMVcsX3FVd3U7yxR5m:585913
 text-1.2.2.1-6Pphv4bz3hHEAngNHxPNZe:515
 these-0.7.1-Jw1YCr04InZ1c0BLK9t9qc:2986
 time-1.6.0.1-Lja9T8bqIudL0xdsRMOCyg:1398
@@ -146,7 +146,7 @@ integer-gmp
     GHC.Integer.Type:                   79637
 
 main
-    Main:                               32422
+    Main:                               31379
 
 prim-uniq-0.1.0.1-Lbg7Imujn019qkjLCx908j
     Unsafe.Unique.Prim:                 1053
@@ -179,7 +179,7 @@ reflex-dom-0.4-D2yHtMVcsX3FVd3U7yxR5m
     Foreign.JavaScript.TH:              31067
     Reflex.Dom.Builder.Class:           20067
     Reflex.Dom.Builder.Class.Events:    138873
-    Reflex.Dom.Builder.Immediate:       344609
+    Reflex.Dom.Builder.Immediate:       344606
     Reflex.Dom.Internal:                26385
     Reflex.Dom.Old:                     5674
     Reflex.Dom.Time:                    3466
@@ -205,5 +205,5 @@ unbounded-delays-0.1.0.9-2kdACByAZph7DKPj2g2mjk
 
 
 
-packed metadata: 543559
+packed metadata: 543367
 
