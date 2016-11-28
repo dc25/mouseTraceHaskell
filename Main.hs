@@ -8,18 +8,10 @@ import GHCJS.DOM.EventM (mouseOffsetXY)
 
 type Point = (Int,Int)
 
-data Cmd = Trace (Int, Point) | Expire Int
-
 type Model = Map Int Point
 
 svgns :: Maybe Text
 svgns = (Just "http://www.w3.org/2000/svg")
-
-update :: Cmd -> Model -> Model
-update cmd points  = 
-    case cmd of
-        Trace (index, location) -> insert index location points
-        Expire index -> delete index points
 
 pointAttrs :: Point -> Map Text Text
 pointAttrs (x,y) =
@@ -29,12 +21,12 @@ pointAttrs (x,y) =
              , ( "style",  "fill:green")
              ] 
 
-showPoint :: MonadWidget t m => Int -> Dynamic t Point -> m (Event t Cmd)
-showPoint index dPoint = do
+showPoint :: MonadWidget t m => Int -> Point -> m (Event t (Map Int (Maybe Point)))
+showPoint index point = do
     elStopPropagationNS svgns "g" Mousemove $ 
-        elDynAttrNS' svgns "circle" (pointAttrs <$> dPoint) $ return ()
+        elDynAttrNS' svgns "circle" (constDyn $ pointAttrs point) $ return ()
     db <- delay 0.3 =<< getPostBuild
-    return $ (const $ Expire index) <$> db
+    return $ ( (fromList $ [(index,Nothing)]) <$ db )
 
 main = mainWidget $ do
     let attrs = constDyn $ 
@@ -44,14 +36,15 @@ main = mainWidget $ do
                              ]
 
     rec 
-        (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey model showPoint
+        (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listHoldWithKey mempty updateEvents showPoint
 
         traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
 
         dTraceAdd <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) traceEvent
 
-        let viewEvents = leftmost [ Trace <$> updated dTraceAdd
+        let dTraceAddMap = fmap (\(index, pos) -> fromList $ [(index, Just pos)]) dTraceAdd
+
+        let updateEvents = leftmost [ updated dTraceAddMap
                           , switch $ leftmost.elems <$> current dExpireEvents
                           ]
-        model <- foldDyn update mempty viewEvents
     return ()
