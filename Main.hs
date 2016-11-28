@@ -10,18 +10,16 @@ type Point = (Int,Int)
 
 data Cmd = Trace (Int, Point) | Expire Int
 
-data Model = Model { 
-                   points ::  Map Int Point
-                   }
+type Model = Map Int Point
 
 svgns :: Maybe Text
 svgns = (Just "http://www.w3.org/2000/svg")
 
 update :: Cmd -> Model -> Model
-update cmd (Model points)  = 
+update cmd points  = 
     case cmd of
-        Trace (index, location) -> Model $ insert index location points
-        Expire index ->   Model $ delete index points
+        Trace (index, location) -> insert index location points
+        Expire index -> delete index points
 
 pointAttrs :: Point -> Map Text Text
 pointAttrs (x,y) =
@@ -46,9 +44,7 @@ view model = do
                              , ("style" , "border:solid; margin:8em")
                              ]
 
-        pointMap = points <$> model
-
-    (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey pointMap showPoint
+    (elm, dExpireEvents) <- elDynAttrNS' svgns "svg" attrs $ listWithKey model showPoint
 
     traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
 
@@ -61,5 +57,5 @@ view model = do
 
 main = mainWidget $ do
     rec 
-        model <- foldDyn update (Model empty) =<< view model
+        model <- foldDyn update mempty =<< view model
     return ()
