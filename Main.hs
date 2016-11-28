@@ -23,29 +23,27 @@ pointAttrs (x,y) =
     fromList [ ( "cx",     pack $ show x)
              , ( "cy",     pack $ show y)
              , ( "r",      "10.0")
-             , ( "style",  "fill:purple")
+             , ( "style",  "fill:green")
              ] 
 
-showPoint :: MonadWidget t m => Int -> Point -> m (Event t (Map Int (Maybe Point)))
+showPoint :: MonadWidget t m => Int -> Point -> m (Event t Int)
 showPoint index point = do
     elStopPropagationNS svgns "g" Mousemove $ 
         elDynAttrNS' svgns "circle" (constDyn $ pointAttrs point) $ return ()
     db <- delay 0.3 =<< getPostBuild
-    return $ fromList [(index,Nothing)] <$ db 
+    return $ index <$ db 
 
 main = mainWidget $ do
     rec 
-        (elm, expireEv) <- elDynAttrNS' svgns "svg" (constDyn boxAttrs) $ listHoldWithKey mempty updateEvents showPoint
+        let expireMapEv0 = listHoldWithKey mempty updateEvents showPoint
+        (elm, expireMapEv) <- elDynAttrNS' svgns "svg" (constDyn boxAttrs) expireMapEv0
 
-        traceEvent <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
+        mouseEv <- wrapDomEvent (_element_raw elm) (onEventName Mousemove) mouseOffsetXY
+        mouseDyn <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) mouseEv
 
-        dTraceAdd <- foldDyn (\newPos present -> (1 + fst present,newPos)) (0, (0,0)) traceEvent
-
-        let dTraceAddMap = 
-                fmap (\(index, pos) -> fromList [(index, Just pos)]) dTraceAdd
-
-            updateEvents = 
-                leftmost [ updated dTraceAddMap
-                         , switch $ leftmost.elems <$> current expireEv
-                         ]
+        let traceDyn = fmap (\(index, pos) -> fromList [(index, Just pos)]) mouseDyn
+            traceEv = updated traceDyn
+            expireIndexEv = switch $ leftmost.elems <$> current expireMapEv
+            expireEv = fmap (\index -> fromList [(index, Nothing)]) expireIndexEv
+            updateEvents = leftmost [ traceEv, expireEv ]
     return ()
