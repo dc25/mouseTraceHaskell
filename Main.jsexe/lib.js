@@ -2308,7 +2308,7 @@ if(String.prototype.codePointAt) {
     }
     h$jsstringHead = function(str) {
         ;
- var cp = ch.codePointAt(0);
+ var cp = str.codePointAt(0);
  return (cp === undefined) ? -1 : (cp|0);
     }
     h$jsstringTail = function(str) {
@@ -2331,10 +2331,10 @@ if(String.prototype.codePointAt) {
     h$jsstringUncons = function(str) {
         ;
  var l = str.length;
- if(l===0) return null;
+ if(l===0) return -1;
  var ch = str.codePointAt(0);
         if(ch === undefined) {
-     { h$ret1 = (null); return (null); };
+     { h$ret1 = (null); return (-1); };
         }
         { h$ret1 = (str.substr(((ch)>=0x10000)?2:1)); return (ch); };
     }
@@ -3533,7 +3533,7 @@ function h$allProps(o) {
     for(var p in o) a[i++] = p;
     return a;
 }
-function h$listProps(o) {
+function h$listAllProps(o) {
     var r = h$ghczmprimZCGHCziTypesziZMZN;
     for(var p in o) { r = (h$c2(h$ghczmprimZCGHCziTypesziZC_con_e, ((h$c1(h$ghcjszmprimZCGHCJSziPrimziJSVal_con_e, (p)))), (r))); }
     return r;
